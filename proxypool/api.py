@@ -18,11 +18,11 @@ def index():
     return '<h2>Welcome to Proxy Pool System</h2>'
 
 
-@app.route('/random')
+@app.route('/get')
 def get_proxy():
     """
-    Get a proxy
-    :return: 随机代理
+    Get a random proxy.
+    :return: random proxy
     """
     conn = get_conn()
     return conn.random()
@@ -31,8 +31,8 @@ def get_proxy():
 @app.route('/count')
 def get_counts():
     """
-    Get the count of proxies
-    :return: 代理池总量
+    Get the count of proxies.
+    :return: the count of proxies.
     """
     conn = get_conn()
     return str(conn.count())

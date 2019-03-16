@@ -1,11 +1,8 @@
 import re
 import redis
-#from proxypool.setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
-#from proxypool.setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
-#from proxypool.error import PoolEmptyError
-from setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
-from setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
-from error import PoolEmptyError
+from proxypool.setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
+from proxypool.setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
+from proxypool.error import PoolEmptyError
 from random import choice
 
 
@@ -38,11 +35,15 @@ class RedisClient(object):
 
     def random(self):
         """ Get proxy randomly. """
-        result = self.db.zrangebyscore(REDIS_KEY, MIN_SCORE, MAX_SCORE)
+        result = self.db.zrangebyscore(REDIS_KEY, MAX_SCORE-2, MAX_SCORE)
         if len(result):
             return choice(result)
         else:
-            raise PoolEmptyError
+            result = self.db.zrevrange(REDIS_KEY, 8, 100)
+            if len(result):
+                return choice(result)
+            else:
+                raise PoolEmptyError
 
     def decrease(self):
         """
@@ -67,7 +68,7 @@ class RedisClient(object):
 
     def count(self):
         """ Return the number of elements in the set."""
-        return self.zcard(REDIS_KEY)
+        return self.db.zcard(REDIS_KEY)
 
     def all(self):
         """ Return all proxy in the set """

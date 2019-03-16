@@ -2,10 +2,8 @@ import sys
 import time
 import asyncio
 import aiohttp
-#from proxypool.db import RedisClient
-#from proxypool.setting import TEST_URL
-from db import RedisClient
-from setting import TEST_URL
+from proxypool.db import RedisClient
+from proxypool.setting import TEST_URL, BATCH_TEST_SIZE
 
 
 class Tester(object):
@@ -15,17 +13,17 @@ class Tester(object):
 
     async def test_single_proxy(self, proxy):
         """ Asynchronious function to test one proxy. """
-            headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;"\
-                          "q=0.9,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Encoding": "gzip, deflate",     
-                "Accept-Language": "zh-CN,zh;q=0.9",     
-                "Host": "httpbin.org",
-                "Upgrade-Insecure-Requests": "1",     
-                "User-Agent": "Mozilla/5.0 (WindowsNT 10.0; WOW64) "\
-                              "AppleWebKit/537.36 (KHTML, like Gecko) " \
-                              "Chrome/72.0.3626.121 Safari/537.36"   
-            }
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;"\
+                      "q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate",     
+            "Accept-Language": "zh-CN,zh;q=0.9",     
+            "Host": "httpbin.org",
+            "Upgrade-Insecure-Requests": "1",     
+            "User-Agent": "Mozilla/5.0 (WindowsNT 10.0; WOW64) "\
+                          "AppleWebKit/537.36 (KHTML, like Gecko) " \
+                          "Chrome/72.0.3626.121 Safari/537.36"   
+        }
 
         async with aiohttp.ClientSession(headers=headers) as session:
             real_proxy = 'http://' + proxy
@@ -40,7 +38,7 @@ class Tester(object):
                         self.redis.decrease(proxy)
                         print('Proxy test failed: ', proxy)
             except Exception as e:
-                self.redis.decrease(proxy)
+                #self.redis.decrease(proxy)
                 print('Proxy connect failed: ', proxy)
 
     def run(self):

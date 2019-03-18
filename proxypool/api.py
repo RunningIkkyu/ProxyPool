@@ -35,7 +35,12 @@ def get_counts():
     :return: the count of proxies.
     """
     conn = get_conn()
-    return str(conn.count())
+    count1 = str(conn.greatcount())
+    count2 = str(conn.count())
+    s = 'Test success number: {} </br>Total Proxies in Pool: {}'.format(count1, count2)
+    return s
+
+
 
 
 if __name__ == '__main__':

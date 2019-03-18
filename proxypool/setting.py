@@ -29,7 +29,7 @@ GETTER_CYCLE = 300
 TEST_URL = 'https://passport.weibo.cn/signin/login'
 
 # 私人代理开关
-PRIVATE_PROXY_ENABLE = True
+PRIVATE_PROXY_ENABLE = False
 
 
 # API配置

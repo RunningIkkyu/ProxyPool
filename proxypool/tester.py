@@ -31,6 +31,9 @@ class Tester(object):
                           " AppleWebKit/537.36 (KHTML, like Gecko)" \
                           " Chrome/72.0.3626.121 Safari/537.36"   
         }
+        headers1 = {
+            'Connection': 'close',
+        }
         try:
             proxy = self.mq.get()
         except Exception as e:
@@ -41,8 +44,12 @@ class Tester(object):
             'https': 'https://' + proxy,
         }
         try:
-            urllib3.disable_warning()
-            response = requests.get(TEST_URL,  proxies=real_proxy, verify=False, timeout=6)
+            urllib3.disable_warnings()
+            session = requests.Session()
+            requests.adapters.DEFAULT_RETRIES = 5
+            session.keep_alive = False
+            response = session.get(TEST_URL,  proxies=real_proxy, verify=False, timeout=6,
+            headers=headers)
         except Exception as e:
             print("[INFO] Proxy cannot connected: {}. ".format(proxy))
             self.lock.acquire()
@@ -80,8 +87,8 @@ class Tester(object):
                     thread_list.append(thread)
                 for _i in range(BATCH_TEST_SIZE):
                     thread_list[_i].join()
-                sys.stdout.flush()
-                time.sleep(5)
+                #sys.stdout.flush()
+                #time.sleep(5)
         except Exception as e:
             print('Tester Error!', e.args)
 

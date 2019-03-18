@@ -30,7 +30,6 @@ class Scheduler():
     
     def run(self):
         print('Proxy pool is running.')
-        
         if GETTER_ENABLED:
             getter_process = Process(target=self.schedule_getter)
             getter_process.start()

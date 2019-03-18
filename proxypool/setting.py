@@ -10,9 +10,9 @@ REDIS_PASSWORD = None
 REDIS_KEY = 'proxies'
 
 # 代理分数
-MAX_SCORE = 10
-MIN_SCORE = 0
-INITIAL_SCORE = 5
+MAX_SCORE = 3
+MIN_SCORE = 1
+INITIAL_SCORE = 2
 
 VALID_STATUS_CODES = [200, 302]
 
@@ -26,7 +26,7 @@ GETTER_CYCLE = 300
 
 # 测试API，建议抓哪个网站测哪个
 #TEST_URL = 'http://m.weibo.cn'
-TEST_URL = 'http://httpbin.org/get'
+TEST_URL = 'https://httpbin.org/get'
 #TEST_URL = 'https://passport.weibo.cn/signin/login'
 
 
@@ -36,7 +36,7 @@ API_PORT = 5555
 
 # 开关
 TESTER_ENABLED = True
-GETTER_ENABLED = True
+GETTER_ENABLED = True 
 API_ENABLED = True
 
 # 最大批测试量

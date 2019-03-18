@@ -1,4 +1,5 @@
 import re
+from queue import Queue
 import redis
 from proxypool.setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
 from proxypool.setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
@@ -86,7 +87,13 @@ class RedisClient(object):
         return self.db.zrangebyscore(REDIS_KEY, MIN_SCORE, MAX_SCORE)
 
     def batch(self, start, stop):
-        return self.db.zrevrange(REDIS_KEY, start, stop-1)
+        """ Return a batch of proxies by given slice, return a message queue
+        contain thess proxies. """
+        l =  self.db.zrevrange(REDIS_KEY, start, stop-1)
+        q = Queue(maxsize=1000)
+        for i in l:
+            q.put(i)
+        return q
 
 
 if __name__ == '__main__':

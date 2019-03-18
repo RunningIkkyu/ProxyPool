@@ -31,13 +31,13 @@ class Scheduler():
     def run(self):
         print('Proxy pool is running.')
         
-        if TESTER_ENABLED:
-            tester_process = Process(target=self.schedule_tester)
-            tester_process.start()
-        
         if GETTER_ENABLED:
             getter_process = Process(target=self.schedule_getter)
             getter_process.start()
+
+        if TESTER_ENABLED:
+            tester_process = Process(target=self.schedule_tester)
+            tester_process.start()
         
         if API_ENABLED:
             api_process = Process(target=self.schedule_api)

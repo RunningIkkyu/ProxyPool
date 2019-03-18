@@ -6,7 +6,7 @@ Make sure you have install python3.6+ and pip before this.
 
 Execute
 ```
-pip install wheel setuptools.
+pip install wheel setuptools
 pip install aiohttp asyncio
 pip install flask redis pyquery
 sudo apt-get install unzip

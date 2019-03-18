@@ -3,6 +3,9 @@ import redis
 from proxypool.setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
 from proxypool.setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
 from proxypool.error import PoolEmptyError
+#from setting import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_KEY
+#from setting import MAX_SCORE, MIN_SCORE, INITIAL_SCORE
+#from error import PoolEmptyError
 from random import choice
 
 
@@ -19,6 +22,10 @@ class RedisClient(object):
         """
         self.db = redis.Redis(host=host, port=port, password=password, decode_responses=True)
 
+    def getscore(self, proxy):
+        return self.db.zscore(REDIS_KEY, proxy)
+
+
     def add(self, proxy, score=INITIAL_SCORE):
         """
         Add proxy to redis database.
@@ -33,29 +40,33 @@ class RedisClient(object):
         if not self.db.zscore(REDIS_KEY, proxy):
             return self.db.zadd(REDIS_KEY, {proxy: score})
 
+    def greatcount(self):
+        return len(self.db.zrangebyscore(REDIS_KEY, MAX_SCORE, MAX_SCORE))
+
     def random(self):
         """ Get proxy randomly. """
-        result = self.db.zrangebyscore(REDIS_KEY, MAX_SCORE-2, MAX_SCORE)
+        result = self.db.zrangebyscore(REDIS_KEY, MAX_SCORE, MAX_SCORE)
         if len(result):
             return choice(result)
         else:
-            result = self.db.zrevrange(REDIS_KEY, 8, 100)
+            result = self.db.zrevrange(REDIS_KEY, 0, 10)
             if len(result):
                 return choice(result)
             else:
                 raise PoolEmptyError
 
-    def decrease(self):
+    def decrease(self, proxy):
         """
         Decrase the score of proxy.  Remove proxy if it's score lower than MIN_SCORE.
         """
         score = self.db.zscore(REDIS_KEY, proxy)
-        if zscore > MIN_SCORE:
-            print('Proxy: ', proxy, '\t current score:', score)
-            return self.db.zincrby(REDIS_KEY, -1, proxy)
+        print("[DEBUG: db.decrease] score = ", score)
+        if score and score > MIN_SCORE:
+            self.db.zincrby(REDIS_KEY, -1, proxy)
+            print('[DEBUG: db.decrease] Proxy: ', proxy, '\t current score:', self.getscore(proxy))
         else:
             print('Proxy: ', proxy, '\t current score:', score, '---> Removed')
-            return self.db.zrem(REDIS_KEY, proxy)
+            self.db.zrem(REDIS_KEY, proxy)
 
     def exists(self, proxy):
         """ Check if a proxy exists."""
@@ -64,7 +75,7 @@ class RedisClient(object):
     def max(self, proxy):
         """ Set the score of a proxy to max."""
         print('Proxy setted to max: ', MAX_SCORE)
-        return self.db.zadd(REDIS_KEY, {proxy, MAX_SCORE})
+        return self.db.zadd(REDIS_KEY, {proxy: MAX_SCORE})
 
     def count(self):
         """ Return the number of elements in the set."""
@@ -79,8 +90,12 @@ class RedisClient(object):
 
 
 if __name__ == '__main__':
-    conn = RedisClient()
-    result = conn.batch(100, 120)
-
+    db = RedisClient()
+    proxy = db.random()
+    print(db.getscore(proxy))
+    db.decrease(proxy)
+    print(db.getscore(proxy))
+    db.max(proxy)
+    print(db.getscore(proxy))
 
 

@@ -1,11 +1,10 @@
 import sys
 import time
-import asyncio
-try:
-    from aiohttp import ClientError 
-except:     
-    from aiohttp import ClientProxyConnectionError as ProxyConnectionError
-import aiohttp
+import threading
+from queue import Queue
+from threading import Lock
+import requests
+from requests.packages import urllib3
 from proxypool.db import RedisClient
 from proxypool.setting import TEST_URL, BATCH_TEST_SIZE, VALID_STATUS_CODES
 
@@ -14,9 +13,13 @@ class Tester(object):
     """ Test the availiabilit of proxy. """
     def __init__(self):
         self.redis = RedisClient()
+        self.redis.all()
+        self.lock = threading.Lock()
+        self.mq = Queue()
 
-    async def test_single_proxy(self, proxy):
-        """ Asynchronious function to test one proxy. """
+    def test_proxy(self):
+        """ test one proxy. """
+
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;"\
                       "q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -28,30 +31,39 @@ class Tester(object):
                           " AppleWebKit/537.36 (KHTML, like Gecko)" \
                           " Chrome/72.0.3626.121 Safari/537.36"   
         }
+        try:
+            proxy = self.mq.get()
+        except Exception as e:
+            print('[ERROR] No proxy to get.')
+            return
+        real_proxy = {
+            'http': 'http://' + proxy,
+            'https': 'https://' + proxy,
+        }
+        try:
+            urllib3.disable_warning()
+            response = requests.get(TEST_URL,  proxies=real_proxy, verify=False, timeout=6)
+        except Exception as e:
+            print("[INFO] Proxy cannot connected: {}. ".format(proxy))
+            self.lock.acquire()
+            self.redis.decrease(proxy)
+            self.lock.release()
+            return
+        if response.text.find('密码'):
+            print("[INFO] Proxy tested success {}.".format(proxy))
+            self.lock.acquire()
+            self.redis.max(proxy)
+            self.lock.release()
+        else:
+            print('[INFO] Proxy tested failed, status code: {}'.format(proxy,
+                                                                          response.status_code))
+            self.lock.acquire()
+            self.redis.decrease(proxy)
+            self.lock.release()
 
-        conn = aiohttp.TCPConnector(verify_ssl=False)
-        async with aiohttp.ClientSession(connector=conn, headers=headers) as session:
-        #async with aiohttp.ClientSession(connector=conn) as session:
-            try:
-                if isinstance(proxy, bytes):
-                    proxy = proxy.decode('utf-8')
-                real_proxy = 'http://' + proxy
-                print('Testing proxy: ', proxy)
-                async with session.get(TEST_URL, proxy=real_proxy, timeout=15,
-                                       allow_redirects=False) as response:
-                    if response.status in  VALID_STATUS_CODES:
-                        print('Proxy', proxy, 'test success! ')
-                        self.redis.max(proxy)
-                    else:
-                        print('Proxy', proxy, 'test failed! ')
-                        self.redis.decrease(proxy)
-                        print('Proxy test failed: ', response.status, ' IP:', proxy)
-            except Exception as e:
-            #except (ClientError, aiohttp.client_exceptions.ClientConnectorError, asyncio.TimeoutError, AttributeError):
-                self.redis.decrease(proxy)
-                print('Proxy connected failed : ', e)
 
     def run(self):
+        requests.DEFAULT_RETRIES = 10 
         print('Proxy tester started.')
         try:
             count = self.redis.count()
@@ -60,10 +72,14 @@ class Tester(object):
                 start = i
                 stop = min(i + BATCH_TEST_SIZE, count)
                 print('Testing', start + 1, '-', stop, 'proxy')
-                test_proxies = self.redis.batch(start, stop)
-                loop = asyncio.get_event_loop()
-                tasks = [self.test_single_proxy(proxy) for proxy in test_proxies]
-                loop.run_until_complete(asyncio.wait(tasks))
+                self.mq = self.redis.batch(start, stop)
+                thread_list = []
+                for _i in range(BATCH_TEST_SIZE):
+                    thread = threading.Thread(target=self.test_proxy)
+                    thread.start()
+                    thread_list.append(thread)
+                for _i in range(BATCH_TEST_SIZE):
+                    thread_list[_i].join()
                 sys.stdout.flush()
                 time.sleep(5)
         except Exception as e:

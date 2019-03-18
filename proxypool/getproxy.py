@@ -4,7 +4,7 @@ import sys
 import requests
 from lxml.etree import HTML
 import lxml
-from util.UtilFunctions import getHtmlTree
+#from util.UtilFunctions import getHtmlTree
 
 
 class GetProxy(object):
@@ -129,20 +129,20 @@ class GetProxy(object):
 
 def test_one_proxy(proxy):
     proxy = {
-        'https' : 'https'+p, 
-        'http': 'http'+p
+        'https' : 'https://'+proxy, 
+        'http': 'http://'+proxy
     }
     #test_url = 'https://httpbin.org/ip'
     test_url = 'https://passport.weibo.cn/signin/login'
     try:
         r = requests.get(test_url, proxies=proxy, timeout=10)
     except Exception as e:
-        print(p,"Cannot connect ",e)
+        print(proxy,"Cannot connect ",e)
         return 
     if r.text.find('密码'):
         #ip = json.loads(r.text).get('origin').split(',')[0]
         #print(r.text)
-        return p
+        return proxy
     else:
         print(p, "status code", r.status_code)
         return None

@@ -10,8 +10,7 @@ pip install wheel setuptools.
 pip install aiohttp asyncio
 pip install flask redis pyquery
 sudo apt-get install unzip
-wget https://github.com/RunningIkkyu/ProxyPool/archive/master.zip && unzip master.zip && rm
-master.zip
+wget https://github.com/RunningIkkyu/ProxyPool/archive/master.zip && unzip master.zip && rm master.zip
 ```
 
 ## Run

@@ -70,7 +70,6 @@ class Tester(object):
 
 
     def run(self):
-        requests.DEFAULT_RETRIES = 10 
         print('Proxy tester started.')
         try:
             count = self.redis.count()
@@ -87,7 +86,7 @@ class Tester(object):
                     thread_list.append(thread)
                 for _i in range(BATCH_TEST_SIZE):
                     thread_list[_i].join()
-                #sys.stdout.flush()
+                sys.stdout.flush()
                 #time.sleep(5)
         except Exception as e:
             print('Tester Error!', e.args)

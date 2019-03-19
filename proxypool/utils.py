@@ -18,7 +18,7 @@ def get_page(url, options={}):
     headers = dict(base_headers, **options)
     print('Getting...', url)
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=6)
         print('Crawl sucess', url, response.status_code)
         if response.status_code == 200:
             return response.text
